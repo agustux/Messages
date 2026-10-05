@@ -231,6 +231,7 @@ class ThreadActivity : SimpleActivity() {
     private lateinit var scheduledDateTime: DateTime
 
     private var isAttachmentPickerVisible = false
+    private var isInitialMessagesLoad = true
 
     private val binding by viewBinding(ActivityThreadBinding::inflate)
 
@@ -611,12 +612,14 @@ class ThreadActivity : SimpleActivity() {
             refreshMenuItems()
             getOrCreateThreadAdapter().apply {
                 val layoutManager = binding.threadMessagesList.layoutManager as LinearLayoutManager
-                val lastPosition = itemCount - 1
+                val newLastPosition = latestThreadItems.lastIndex
                 val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
+                val wasNearBottom = (itemCount - 1) - lastVisiblePosition <= 1
+                val hasNewLastItem = currentList.lastOrNull() != latestThreadItems.lastOrNull()
                 val shouldScrollToBottom =
-                    currentList.lastOrNull() != latestThreadItems.lastOrNull() &&
-                            lastPosition - lastVisiblePosition == 1
-                updateMessages(latestThreadItems, if (shouldScrollToBottom) lastPosition else -1)
+                    isInitialMessagesLoad || (hasNewLastItem && wasNearBottom)
+                isInitialMessagesLoad = false
+                updateMessages(latestThreadItems, if (shouldScrollToBottom) newLastPosition else -1)
             }
         }
 
